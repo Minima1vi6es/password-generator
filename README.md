@@ -1,3 +1,15 @@
+## Changelog
+
+### [v1.1] - 2025-02-26
+- Improved UI for better responsiveness on mobile and desktop.
+- Added user-selectable options for password complexity (special characters, numbers, uppercase).
+- Integrated real-time password crack time estimation based on entropy.
+- Added explanations of different attack methods (brute force, dictionary, hybrid).
+
+
+
+
+
 name: Strong Password Generator
 
 description: >
