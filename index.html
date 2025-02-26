@@ -3,105 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Strong Password Generator</title>
+    <title>Password Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #f4f4f4;
+            background-color: #f8f9fa;
         }
         .container {
+            max-width: 500px;
             background: white;
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
-        input, button {
-            margin-top: 10px;
+        #password {
+            font-size: 1.5rem;
+            margin: 20px 0;
+            word-break: break-all;
+            background: #e9ecef;
             padding: 10px;
-            width: 100%;
+            border-radius: 5px;
         }
-        .strength {
-            margin-top: 10px;
-            font-weight: bold;
+        .form-group, .form-check {
+            text-align: left;
+            margin: 10px 0;
+        }
+        #crack-times {
+            margin-top: 20px;
+            text-align: left;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Strong Password Generator</h2>
-        <label for="length">Password Length:</label>
-        <input type="number" id="length" min="8" max="32" value="12">
-        <br>
-        <label><input type="checkbox" id="uppercase" checked> Include Uppercase</label>
-        <br>
-        <label><input type="checkbox" id="lowercase" checked> Include Lowercase</label>
-        <br>
-        <label><input type="checkbox" id="numbers" checked> Include Numbers</label>
-        <br>
-        <label><input type="checkbox" id="symbols" checked> Include Symbols</label>
-        <br>
-        <button onclick="generatePassword()">Generate Password</button>
-        <input type="text" id="password" readonly>
-        <button onclick="copyPassword()">Copy to Clipboard</button>
-        <p class="strength" id="strength"></p>
+        <h1 class="mb-3">Password Generator</h1>
+        <div class="form-group">
+            <label for="length">Number of Characters:</label>
+            <input type="number" id="length" class="form-control" value="12" min="6" max="64">
+        </div>
+        <div class="form-check">
+            <input type="checkbox" id="include-special" class="form-check-input" checked>
+            <label for="include-special" class="form-check-label">Include Special Characters</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" id="include-numbers" class="form-check-input" checked>
+            <label for="include-numbers" class="form-check-label">Include Numbers</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" id="include-uppercase" class="form-check-input" checked>
+            <label for="include-uppercase" class="form-check-label">Include Uppercase Letters</label>
+        </div>
+        <button id="generate" class="btn btn-primary mt-3">Generate Password</button>
+        <div id="password" class="mt-3"></div>
+        <div id="crack-times" class="mt-3"></div>
     </div>
 
     <script>
-        function generatePassword() {
-            const length = document.getElementById("length").value;
-            const useUppercase = document.getElementById("uppercase").checked;
-            const useLowercase = document.getElementById("lowercase").checked;
-            const useNumbers = document.getElementById("numbers").checked;
-            const useSymbols = document.getElementById("symbols").checked;
-
-            const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
-            const numberChars = "0123456789";
-            const symbolChars = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+        function generatePassword(length, useSpecial, useNumbers, useUppercase) {
+            let charset = "abcdefghijklmnopqrstuvwxyz";
+            if (useUppercase) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            if (useNumbers) charset += "0123456789";
+            if (useSpecial) charset += "!@#$%^&*()_+~`|}{[]:;?><,./-=";
             
-            let allChars = "";
-            if (useUppercase) allChars += uppercaseChars;
-            if (useLowercase) allChars += lowercaseChars;
-            if (useNumbers) allChars += numberChars;
-            if (useSymbols) allChars += symbolChars;
-
-            if (allChars === "") {
-                document.getElementById("password").value = "Please select at least one option";
-                document.getElementById("strength").innerText = "";
-                return;
-            }
-
             let password = "";
             for (let i = 0; i < length; i++) {
-                password += allChars.charAt(Math.floor(Math.random() * allChars.length));
+                const randomIndex = Math.floor(Math.random() * charset.length);
+                password += charset[randomIndex];
             }
+            return password;
+        }
+
+        function calculateEntropy(password) {
+            const uniqueChars = new Set(password).size;
+            const charsetSize = uniqueChars > 0 ? uniqueChars : 1;
+            return password.length * Math.log2(charsetSize);
+        }
+
+        function estimateCrackTime(entropy, speed, method) {
+            const combinations = Math.pow(2, entropy);
+            const seconds = combinations / speed;
+            return { 
+                time: formatTime(seconds), 
+                details: `Estimated based on ${speed.toExponential()} guesses per second.<br><strong>Attack Method:</strong> ${method}`
+            };
+        }
+
+        function formatTime(seconds) {
+            const units = [
+                { label: "year", value: 31536000 },
+                { label: "day", value: 86400 },
+                { label: "hour", value: 3600 },
+                { label: "minute", value: 60 },
+                { label: "second", value: 1 }
+            ];
+            let result = [];
+            for (const unit of units) {
+                const quotient = Math.floor(seconds / unit.value);
+                if (quotient > 0) {
+                    result.push(`${quotient} ${unit.label}${quotient > 1 ? 's' : ''}`);
+                    seconds %= unit.value;
+                }
+            }
+            return result.length ? result.join(", ") : "less than a second";
+        }
+
+        function updateCrackTimes(password) {
+            const entropy = calculateEntropy(password);
+
+            const crackTimes = {
+                "Brute Force": estimateCrackTime(entropy, 1e9, "Trying every possible combination sequentially."),
+                "Dictionary Attack": estimateCrackTime(entropy, 1e6, "Using a precompiled list of common words and phrases."),
+                "Hybrid Attack": estimateCrackTime(entropy, 1e7, "Combining dictionary words with brute force techniques.")
+            };
+
+            let crackTimesHTML = "<h3>Estimated Time to Crack:</h3><ul class='list-group'>";
+            for (const [method, { time, details }] of Object.entries(crackTimes)) {
+                crackTimesHTML += `<li class='list-group-item'><strong>${method}:</strong> ${time}<br><small>${details}</small></li>`;
+            }
+            crackTimesHTML += "</ul>";
+
+            document.getElementById("crack-times").innerHTML = crackTimesHTML;
+        }
+
+        document.getElementById("generate").addEventListener("click", () => {
+            const length = parseInt(document.getElementById("length").value);
+            const useSpecial = document.getElementById("include-special").checked;
+            const useNumbers = document.getElementById("include-numbers").checked;
+            const useUppercase = document.getElementById("include-uppercase").checked;
             
-            document.getElementById("password").value = password;
-            evaluateStrength(password);
-        }
-
-        function evaluateStrength(password) {
-            let strengthText = "Weak";
-            if (password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /[0-9]/.test(password) && /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) {
-                strengthText = "Very Strong";
-            } else if (password.length >= 10) {
-                strengthText = "Strong";
-            } else if (password.length >= 8) {
-                strengthText = "Moderate";
-            }
-            document.getElementById("strength").innerText = "Strength: " + strengthText;
-        }
-
-        function copyPassword() {
-            const passwordField = document.getElementById("password");
-            passwordField.select();
-            document.execCommand("copy");
-        }
+            const password = generatePassword(length, useSpecial, useNumbers, useUppercase);
+            document.getElementById("password").innerText = password;
+            updateCrackTimes(password);
+        });
     </script>
 </body>
 </html>
