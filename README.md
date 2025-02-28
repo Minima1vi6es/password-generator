@@ -1,5 +1,12 @@
 ## Changelog
 
+## Changelog
+
+### [v1.2] - 2025-02-28
+- Added "Copy to Clipboard" button for generated passwords.
+- Display a success message when a password is copied.
+- Ensured seamless clipboard interaction using `navigator.clipboard`.
+
 ### [v1.1] - 2025-02-26
 - Improved UI for better responsiveness on mobile and desktop.
 - Added user-selectable options for password complexity (special characters, numbers, uppercase).
